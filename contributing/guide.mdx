@@ -1,0 +1,135 @@
+---
+title: "Contributing guide"
+description: "How to contribute bug fixes, data updates, and new features"
+---
+
+Before writing any code, check the [open issues](https://github.com/sebasgao05/duitama-taxi-pricing/issues) to see if your bug or idea is already tracked. If not, open an issue first — this avoids duplicated effort. For small fixes like typos or comments, you can go straight to a PR.
+
+## Types of contributions
+
+| Type | Description | Issue required |
+|------|-------------|----------------|
+| Bug fix | Correct an error in fare logic or the API | Yes |
+| Data update | Change fares, neighborhoods, or special routes in `src/data/` | Yes |
+| New feature | Add an endpoint or new business logic | Yes |
+| Documentation | Improve the README, Swagger docs, or examples | No |
+| Refactor | Improve code without changing behavior | No |
+
+## Local setup
+
+**Prerequisites:** Node.js >= 18, npm >= 9
+
+```bash
+git clone https://github.com/<your-username>/duitama-taxi-pricing.git
+cd duitama-taxi-pricing
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Verify everything is working by visiting `http://localhost:3000/health`.
+
+## Git workflow
+
+<Steps>
+  <Step title="Fork and sync">
+    Fork the repository on GitHub, then add the upstream remote and sync your local `main`:
+
+    ```bash
+    git remote add upstream https://github.com/sebasgao05/duitama-taxi-pricing.git
+    git fetch upstream
+    git checkout main
+    git merge upstream/main
+    ```
+  </Step>
+  <Step title="Create a branch from main">
+    Create a descriptive branch using the naming conventions below:
+
+    ```bash
+    git checkout -b fix/calculo-recargo-diciembre
+    # or
+    git checkout -b feat/endpoint-historial
+    ```
+  </Step>
+  <Step title="Make your changes">
+    Write your code following the [code standards](#code-standards) below. Commit using the [Conventional Commits](#commit-convention) format.
+  </Step>
+  <Step title="Push your branch">
+    ```bash
+    git push origin fix/calculo-recargo-diciembre
+    ```
+  </Step>
+  <Step title="Open a pull request">
+    Open the PR on GitHub. The PR template will ask for a description, the related issue, the type of change, test confirmation, and any screenshots or examples.
+  </Step>
+</Steps>
+
+### Branch naming conventions
+
+| Prefix | Use |
+|--------|-----|
+| `feat/` | New feature |
+| `fix/` | Bug fix |
+| `data/` | Fare or neighborhood data update |
+| `docs/` | Documentation only |
+| `refactor/` | Refactoring |
+
+## Commit convention
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>: <short description in Spanish>
+
+[optional body]
+
+[issue reference: Closes #12]
+```
+
+**Valid types:** `feat`, `fix`, `data`, `docs`, `refactor`, `test`, `chore`
+
+**Examples:**
+
+```text
+fix: corregir cálculo de recargo en Semana Santa
+data: actualizar tarifa cuarto sector a $12.600
+feat: agregar endpoint de historial de consultas
+docs: agregar ejemplos de curl en README
+```
+
+## Code standards
+
+- Use **TypeScript strict mode** — do not use `any` without justification.
+- Business logic belongs in `src/services/`, never in controllers.
+- Static data belongs in `src/data/` as JSON files.
+- Always sanitize inputs that are injected into HTML (see the `/docs` endpoint in `server.ts` as a reference).
+- Use existing files as style references before introducing new patterns.
+
+## Testing
+
+Every change to fare logic must include or update tests.
+
+```bash
+# Run all tests
+npm test
+
+# View coverage
+npm run test:coverage
+```
+
+Tests live in `src/__tests__/`.
+
+<Warning>
+  PRs with failing tests will not be merged. Make sure `npm test` passes before requesting review.
+</Warning>
+
+## PR review process
+
+1. A maintainer will review your PR within **7 business days**.
+2. If changes are requested, respond in the same PR — do not open a new one.
+3. Once approved, the maintainer merges to `main`.
+4. PRs with no activity for **30 days** will be closed.
+
+<Note>
+  If you have questions, open an issue with the `question` label.
+</Note>

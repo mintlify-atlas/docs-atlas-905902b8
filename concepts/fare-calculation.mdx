@@ -1,0 +1,104 @@
+---
+title: "Fare calculation"
+description: "How the API determines the correct taxi fare for any trip"
+---
+
+The API evaluates every fare request through a three-priority rule engine implemented in `calcularTarifa`. Rules are checked in strict order — the first rule that matches wins, and no further rules are evaluated.
+
+## Priority rule engine
+
+<Steps>
+  <Step title="Special route (ruta especial única)">
+    If either the origin **or** destination matches a zone defined in `rutas_especiales.json`, the fixed fare for that route is applied immediately. This is a **total override** — the sector tables are never consulted.
+
+    The response will include:
+    - `sector_aplicado: "ruta especial única"`
+    - `fuente: "rutas_especiales.json → <route id>"`
+  </Step>
+  <Step title="Terminal de Transporte table">
+    If neither endpoint triggers a special route, the API checks whether the origin or destination is the Terminal de Transporte (or Carrera 42). The following keywords are recognized (case-insensitive, accent-insensitive):
+
+    - `terminal`
+    - `terminal de transporte`
+    - `carrera 42`
+    - `cra 42`
+    - `cra. 42`
+
+    When this condition is met, the **other** neighborhood is looked up in `barrios_terminal.json` — a separate table that assigns different sector values for Terminal trips. If the neighborhood is found there, its sector fare applies.
+
+    If the neighborhood is not explicitly listed in `barrios_terminal.json`, the API falls through to Priority 3 and logs a warning.
+
+    The `fuente` field will read: `"barrios_terminal.json → <sector>"`.
+  </Step>
+  <Step title="General sector table">
+    For all other trips, both the origin and destination neighborhoods are looked up in `barrios.json`. The **highest sector** between the two is used to determine the fare.
+
+    Sector order from lowest to highest:
+    `primer_sector` → `segundo_sector` → `tarifa_especial` → `tercer_sector` → `cuarto_sector`
+
+    The `fuente` field will read: `"barrios.json → <sector>"`.
+  </Step>
+</Steps>
+
+## Neighborhood matching
+
+Matching is **exact** — there is no fuzzy matching, substring matching, or approximate search. Before comparison, both the input and the stored neighborhood name are normalized using the same function:
+
+```typescript
+function normalizar(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+```
+
+This means:
+- `"San Fernando"` → `"san fernando"`
+- `"Córdoba"` → `"cordoba"`
+- `" Centro "` → `"centro"`
+
+After normalization, the strings must be **identical**. `"Cogollo Alto"` does not match `"Cogollo"`.
+
+## Concrete example
+
+**Request:**
+```json
+{
+  "origen": "San Fernando",
+  "destino": "Centro"
+}
+```
+
+**Evaluation:**
+1. Neither "San Fernando" nor "Centro" is in any special route zone — Priority 1 skipped.
+2. Neither is a Terminal keyword — Priority 2 skipped.
+3. Both are looked up in `barrios.json`. Both belong to `primer_sector`. Highest sector: `primer_sector`.
+4. Time is daytime → fare is **$7,000**.
+
+**Response excerpt:**
+```json
+{
+  "tarifa": 7000,
+  "tipo": "diurna",
+  "sector_aplicado": "primer sector",
+  "detalle": "Tarifa base primer sector diurna",
+  "fuente": "barrios.json → primer_sector",
+  "recargos": []
+}
+```
+
+## The `fuente` field
+
+Every response includes a `fuente` field that identifies exactly which data file and sector produced the fare. This is useful for debugging and audit purposes.
+
+| Value | Meaning |
+|-------|---------|
+| `rutas_especiales.json → ruta_1` | Matched special route 1 |
+| `barrios_terminal.json → tercer_sector` | Terminal table, third sector |
+| `barrios.json → segundo_sector` | General table, second sector |
+
+<Note>
+  If a neighborhood cannot be found in any table, the API returns an error. There are no default or fallback fares.
+</Note>

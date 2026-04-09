@@ -1,0 +1,120 @@
+---
+title: "List neighborhoods"
+description: "GET /api/v2026/barrios — Retrieve all neighborhoods grouped by sector"
+---
+
+Returns every neighborhood in the fare database, grouped by sector. The response contains two tables: `general` (standard fare table) and `terminal` (fares that apply when the trip involves Terminal de Transporte or Carrera 42).
+
+<Tip>
+  Use this endpoint to build autocomplete inputs or to validate neighborhood names before calling `/calculate-fare`. The names returned here are the canonical spellings the API expects. Matching is still accent- and case-insensitive, but autocomplete should display these canonical forms.
+</Tip>
+
+## Endpoint
+
+```
+GET /api/v2026/barrios
+```
+
+No parameters. No authentication required.
+
+**Caching:** Responses include `Cache-Control: public, max-age=300`.
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 UTC timestamp of the response.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  <Expandable title="properties" defaultOpen>
+    <ResponseField name="general" type="object">
+      Mapping of sector labels to sorted arrays of neighborhood names. These are the neighborhoods used for all trips that do not involve Terminal de Transporte or Carrera 42.
+
+      Keys are human-readable sector labels (e.g., `"primer sector"`, `"cuarto sector"`). Values are sorted string arrays.
+    </ResponseField>
+    <ResponseField name="terminal" type="object">
+      Mapping of sector labels to sorted arrays of neighborhood names for the Terminal de Transporte fare table. A neighborhood may appear here with a different sector than in `general`.
+
+      Keys are human-readable sector labels. Values are sorted string arrays.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example
+
+```bash
+curl http://localhost:3000/api/v2026/barrios
+```
+
+### Sample response (abbreviated)
+
+```json
+{
+  "success": true,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "data": {
+    "general": {
+      "primer sector": [
+        "Barrio Las Lajas",
+        "Boyacá",
+        "Brasas Campestre",
+        "Cándido Quintero",
+        "Centro Camionero",
+        "Cerro Pino",
+        "San Fernando",
+        "Santander"
+      ],
+      "segundo sector": [
+        "Colombia Capilla Divino Niño",
+        "Comunal",
+        "Manzanares",
+        "Once de Mayo",
+        "Pueblito Boyacense"
+      ],
+      "tarifa especial": [
+        "Barrio León XIII",
+        "Casa de la Campana",
+        "La Gruta",
+        "Panorama"
+      ],
+      "tercer sector": [
+        "Capilla Tocogua",
+        "Las Margaritas",
+        "Ojo de Agua",
+        "Sauna La Frontera"
+      ],
+      "cuarto sector": [
+        "Altos de Surba y Bonza",
+        "Clínica Biosalud",
+        "Cogollo Alto",
+        "Confaboy Campestre",
+        "Unad"
+      ]
+    },
+    "terminal": {
+      "primer sector": [
+        "Boyacá",
+        "Brasas Campestre",
+        "Cándido Quintero",
+        "San Fernando",
+        "Santander"
+      ],
+      "cuarto sector": [
+        "Altos de Surba y Bonza",
+        "Clínica Biosalud",
+        "Cogollo Polideportivo",
+        "Las Margaritas",
+        "Sauna La Frontera"
+      ]
+    }
+  }
+}
+```
+
+<Note>
+  Some neighborhoods appear in both `general` and `terminal` with different sectors. For example, `Sauna La Frontera` is `tercer sector` in the general table but `cuarto sector` in the terminal table. The API automatically applies the correct table based on whether the trip involves Terminal de Transporte or Carrera 42.
+</Note>

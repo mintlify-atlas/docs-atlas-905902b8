@@ -1,0 +1,110 @@
+---
+title: "List zones"
+description: "GET /api/v2026/zones — Retrieve all sectors with colors and fares"
+---
+
+Returns all fare sectors, each with a hex color intended for map display, day and night fares, and the full list of neighborhoods in that sector.
+
+## Endpoint
+
+```
+GET /api/v2026/zones
+```
+
+No parameters. No authentication required.
+
+**Caching:** Responses include `Cache-Control: public, max-age=300`. In the production environment, API Gateway caches GET responses for 600 seconds.
+
+## Sector reference
+
+| Sector key        | Human-readable label | Color     | Day fare (COP) | Night fare (COP) |
+| ----------------- | -------------------- | --------- | -------------- | ---------------- |
+| `primer_sector`   | primer sector        | `#4CAF50` | $7,000         | $7,500           |
+| `segundo_sector`  | segundo sector       | `#2196F3` | $7,900         | $8,600           |
+| `tarifa_especial` | tarifa especial      | `#FF9800` | $8,600         | $9,200           |
+| `tercer_sector`   | tercer sector        | `#9C27B0` | $10,200        | $10,900          |
+| `cuarto_sector`   | cuarto sector        | `#F44336` | $12,600        | $13,100          |
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 UTC timestamp of the response.
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  Array of zone objects, one per sector.
+
+  <Expandable title="Zone object properties" defaultOpen>
+    <ResponseField name="sector" type="string">
+      Human-readable sector label (e.g., `"primer sector"`, `"cuarto sector"`).
+    </ResponseField>
+    <ResponseField name="color" type="string">
+      Hex color code for map display (e.g., `"#4CAF50"`).
+    </ResponseField>
+    <ResponseField name="tarifa_dia" type="number">
+      Daytime fare in COP.
+    </ResponseField>
+    <ResponseField name="tarifa_nocturna" type="number">
+      Nighttime fare in COP. Nighttime is 7:00 p.m. – 5:59 a.m. Colombia time.
+    </ResponseField>
+    <ResponseField name="barrios" type="string[]">
+      List of neighborhood names that belong to this sector (general table).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example
+
+```bash
+curl http://localhost:3000/api/v2026/zones
+```
+
+### Sample response
+
+```json
+{
+  "success": true,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "data": [
+    {
+      "sector": "primer sector",
+      "color": "#4CAF50",
+      "tarifa_dia": 7000,
+      "tarifa_nocturna": 7500,
+      "barrios": ["San Fernando", "Santander", "Centro", "La Milagrosa"]
+    },
+    {
+      "sector": "segundo sector",
+      "color": "#2196F3",
+      "tarifa_dia": 7900,
+      "tarifa_nocturna": 8600,
+      "barrios": ["Parte Alta Milagrosa", "Comunal", "Once de Mayo"]
+    },
+    {
+      "sector": "tarifa especial",
+      "color": "#FF9800",
+      "tarifa_dia": 8600,
+      "tarifa_nocturna": 9200,
+      "barrios": ["Barrio León XIII", "Panorama", "La Gruta"]
+    },
+    {
+      "sector": "tercer sector",
+      "color": "#9C27B0",
+      "tarifa_dia": 10200,
+      "tarifa_nocturna": 10900,
+      "barrios": ["Sauna La Frontera", "Las Margaritas", "Ojo de Agua"]
+    },
+    {
+      "sector": "cuarto sector",
+      "color": "#F44336",
+      "tarifa_dia": 12600,
+      "tarifa_nocturna": 13100,
+      "barrios": ["Cogollo Alto", "Unad", "Confaboy Campestre"]
+    }
+  ]
+}
+```

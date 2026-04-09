@@ -1,0 +1,82 @@
+---
+title: 'CI/CD pipeline'
+description: 'Automated testing and deployment with GitHub Actions and AWS SAM'
+---
+
+## Overview
+
+The pipeline is built with **GitHub Actions** and deploys using **AWS SAM**, which packages artifacts to S3 and applies infrastructure changes through CloudFormation.
+
+```
+GitHub Actions
+    │
+    ├── PR opened   → test → deploy QA   (API Gateway + Lambda)
+    ├── Merge main  → test → deploy Staging → (approval) → deploy Production
+    │
+    └── AWS SAM → CloudFormation
+                      └── API Gateway REST ──(cache GET, production only)──► Lambda (Node.js 20)
+                                                                                  └── Express App
+```
+
+## Pipeline stages
+
+| Stage | Trigger | Environment |
+|---|---|---|
+| `test` | All PRs and every push to `main` | — |
+| `deploy-qa` | PR opened | QA (`duitama-taxi-pricing-qa`) |
+| `deploy-staging` | Merge to `main` | Staging (`duitama-taxi-pricing-staging`) |
+| `deploy-production` | Manual approval | Production (`duitama-taxi-pricing-production`) |
+
+<Warning>
+  The `deploy-production` stage requires **manual approval** in GitHub Environments before it runs. No code is deployed to production automatically.
+</Warning>
+
+## How it works
+
+<Steps>
+  <Step title="test — run on every PR and push to main">
+    The test job runs `npm test` (Jest) on every pull request and on every push to the `main` branch. All subsequent deploy jobs depend on this job passing.
+  </Step>
+
+  <Step title="deploy-qa — triggered when a PR is opened">
+    When a pull request is opened, the pipeline deploys the code to the QA stack (`duitama-taxi-pricing-qa`) after tests pass. This gives every PR a live preview environment in API Gateway.
+
+    ```bash
+    sam build
+    sam deploy --config-env qa
+    ```
+  </Step>
+
+  <Step title="deploy-staging — triggered on merge to main">
+    When a PR is merged into `main`, the pipeline deploys to the staging stack (`duitama-taxi-pricing-staging`) after tests pass.
+
+    ```bash
+    sam build
+    sam deploy --config-env staging
+    ```
+  </Step>
+
+  <Step title="deploy-production — requires manual approval">
+    After staging deploys successfully, the pipeline waits for a manual approval in the **GitHub Environments** UI before deploying to production. Once approved:
+
+    ```bash
+    sam build
+    sam deploy --config-env production
+    ```
+
+    Production is the only environment with API Gateway caching enabled (600-second TTL on GET endpoints).
+  </Step>
+</Steps>
+
+## Required secrets
+
+<Note>
+  Add the following secrets to your GitHub repository under **Settings → Secrets and variables → Actions**. The pipeline reads these to authenticate with AWS during SAM deploys.
+</Note>
+
+| Secret | Description |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | AWS IAM access key ID |
+| `AWS_SECRET_ACCESS_KEY` | AWS IAM secret access key |
+
+The IAM user or role must have permissions to deploy CloudFormation stacks, manage Lambda functions, create API Gateway resources, and read/write to S3 (for SAM artifact uploads).

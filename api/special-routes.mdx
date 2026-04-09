@@ -1,0 +1,106 @@
+---
+title: "List special routes"
+description: "GET /api/v2026/rutas-especiales — Retrieve all fixed-fare special routes"
+---
+
+Returns all special routes defined in Decreto 033 of 2026. Each route has a fixed fare that overrides all sector-based pricing. When either the origin or destination of a trip matches a zone in a special route, that route's fare is applied regardless of sector.
+
+<Note>
+  Zone matching is exact (after normalizing accents and casing). A neighborhood must be listed explicitly in a route's `zonas` array to trigger that route's fare. For example, `"Cogollo Alto"` does **not** match the zone `"Cogollo"` — they are distinct neighborhoods.
+</Note>
+
+## Endpoint
+
+```
+GET /api/v2026/rutas-especiales
+```
+
+No parameters. No authentication required.
+
+**Caching:** Responses include `Cache-Control: public, max-age=300`.
+
+## Route reference
+
+| Route ID         | Name                                                  | Day fare (COP) | Night fare (COP) |
+| ---------------- | ----------------------------------------------------- | -------------- | ---------------- |
+| `ruta_1`         | Ruta del Mundial / Cogollo / Campohermoso             | $15,000        | $15,800          |
+| `ruta_2`         | Ruta del Mundial / Tribuna Mirador / Seminario Mayor  | $16,200        | $16,700          |
+| `ruta_3`         | Ciudadela Industrial / Centro Abastos / Lecheboy      | $19,100        | $19,700          |
+| `ruta_4`         | Vereda La Trinidad / La Helida                        | $22,200        | $23,300          |
+| `servicio_horas` | Prestación de servicio por horas                      | $36,100        | $36,100          |
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 UTC timestamp of the response.
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  Array of special route objects.
+
+  <Expandable title="Special route properties" defaultOpen>
+    <ResponseField name="id" type="string">
+      Unique route identifier (e.g., `"ruta_1"`).
+    </ResponseField>
+    <ResponseField name="nombre" type="string">
+      Human-readable route name (e.g., `"Ruta del Mundial / Cogollo / Campohermoso"`).
+    </ResponseField>
+    <ResponseField name="descripcion" type="string">
+      Extended description of the route.
+    </ResponseField>
+    <ResponseField name="zonas" type="string[]">
+      List of neighborhood names that trigger this route's fare. A trip is matched to this route if either the origin or destination exactly equals any entry in this array (after normalizing accents and casing).
+    </ResponseField>
+    <ResponseField name="tarifa_dia" type="number">
+      Fixed daytime fare in COP.
+    </ResponseField>
+    <ResponseField name="tarifa_nocturna" type="number">
+      Fixed nighttime fare in COP. Nighttime is 7:00 p.m. – 5:59 a.m. Colombia time.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example
+
+```bash
+curl http://localhost:3000/api/v2026/rutas-especiales
+```
+
+### Sample response
+
+```json
+{
+  "success": true,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "data": [
+    {
+      "id": "ruta_1",
+      "nombre": "Ruta del Mundial / Cogollo / Campohermoso",
+      "descripcion": "Ruta del Mundial (Divino Niño), Cogollo, Campohermoso (Placa Huella), Confaboy Campestre (si se toma desde o hacia el terminal de transporte)",
+      "zonas": ["Divino Niño", "Cogollo", "Campohermoso", "Placa Huella", "Confaboy Campestre"],
+      "tarifa_dia": 15000,
+      "tarifa_nocturna": 15800
+    },
+    {
+      "id": "ruta_2",
+      "nombre": "Ruta del Mundial / Tribuna Mirador / Seminario Mayor",
+      "descripcion": "Ruta del Mundial (Tribuna Mirador), Seminario Mayor, Juriscoop, Puente de la Balsa, Altos de Surba y Bonza (si se toma desde o hacia el centro)",
+      "zonas": ["Tribuna Mirador", "Seminario Mayor", "Juriscoop", "Puente de la Balsa", "Altos de Surba y Bonza"],
+      "tarifa_dia": 16200,
+      "tarifa_nocturna": 16700
+    },
+    {
+      "id": "servicio_horas",
+      "nombre": "Prestación de servicio por horas",
+      "descripcion": "Prestación de servicio por horas bajo el entendido que el servicio prestado es en radio acción del municipio de Duitama",
+      "zonas": [],
+      "tarifa_dia": 36100,
+      "tarifa_nocturna": 36100
+    }
+  ]
+}
+```

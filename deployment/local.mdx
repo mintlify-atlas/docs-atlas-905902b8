@@ -1,0 +1,95 @@
+---
+title: 'Local development'
+description: 'Run the Duitama Taxi Pricing API on your local machine'
+---
+
+## Prerequisites
+
+- **Node.js** >= 18
+- **npm** >= 9
+
+## Setup
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/sebasgao05/duitama-taxi-pricing.git
+    cd duitama-taxi-pricing
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example file and adjust values as needed:
+
+    <CodeGroup>
+
+    ```bash terminal
+    cp .env.example .env
+    ```
+
+    ```ini .env
+    PORT=3000
+    NODE_ENV=development
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Start the development server">
+    ```bash
+    npm run dev
+    ```
+
+    This uses `ts-node-dev` with `--respawn` and `--transpile-only`, so the server restarts automatically on every file change.
+  </Step>
+</Steps>
+
+## Available scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start local server with hot-reload (`ts-node-dev`) |
+| `npm run build` | Compile TypeScript to `dist/` |
+| `npm run build:lambda` | Compile TypeScript and copy `src/swagger.yaml` to `dist/` (required for Lambda deploys) |
+| `npm start` | Run the compiled server from `dist/server.js` |
+| `npm test` | Run the test suite with Jest |
+| `npm run test:coverage` | Run tests and generate a coverage report |
+
+### Running the compiled build
+
+If you want to test the production build locally:
+
+```bash
+npm run build
+npm start
+```
+
+### Running tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+## Endpoints
+
+Once the server is running, the following URLs are available:
+
+| URL | Description |
+|---|---|
+| `http://localhost:3000/api/v2026` | API base path |
+| `http://localhost:3000/health` | Health check — returns `{ "status": "ok" }` |
+| `http://localhost:3000/docs` | Interactive Swagger UI |
+
+<Tip>
+  The Swagger UI at `http://localhost:3000/docs` lets you explore and try every endpoint directly in the browser. It supports both light and dark mode and automatically points to your local server.
+</Tip>

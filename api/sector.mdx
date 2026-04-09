@@ -1,0 +1,94 @@
+---
+title: "Look up sector"
+description: "GET /api/v2026/sector — Find which sector a neighborhood belongs to"
+---
+
+Returns the fare sector for a given neighborhood name. Useful for understanding which pricing tier applies before calling `/calculate-fare`.
+
+## Endpoint
+
+```
+GET /api/v2026/sector
+```
+
+**Caching:** Responses include `Cache-Control: public, max-age=300`.
+
+## Query parameters
+
+<ParamField query="barrio" type="string" required>
+  The neighborhood name to look up. Matching is exact after normalizing accents and casing — `"San Fernando"`, `"san fernando"`, and `"SAN FERNANDO"` all resolve to the same result.
+</ParamField>
+
+## Response
+
+### 200 — Sector found
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 UTC timestamp of the response.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  <Expandable title="properties" defaultOpen>
+    <ResponseField name="barrio" type="string">
+      The neighborhood name as provided in the query parameter.
+    </ResponseField>
+    <ResponseField name="sector" type="string">
+      Human-readable sector label (e.g., `"primer sector"`, `"cuarto sector"`, `"tarifa especial"`).
+    </ResponseField>
+    <ResponseField name="fuente" type="string">
+      Which table the neighborhood was found in: `"general"` (standard fare table) or `"terminal"` (Terminal de Transporte fare table). A neighborhood can exist in both tables with different sectors — see the [fare calculation logic](/api/calculate-fare).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Error responses
+
+| HTTP status | Error code        | Cause                                   |
+| ----------- | ----------------- | --------------------------------------- |
+| `400`       | `MISSING_PARAM`   | `barrio` query parameter was not provided. |
+| `404`       | `BARRIO_NOT_FOUND`| The neighborhood was not found in any table. |
+
+## Examples
+
+<CodeGroup>
+
+```bash Neighborhood found
+curl "http://localhost:3000/api/v2026/sector?barrio=San%20Fernando"
+```
+
+```bash Neighborhood not found
+curl "http://localhost:3000/api/v2026/sector?barrio=BarrioFalso"
+```
+
+</CodeGroup>
+
+### Sample response — found
+
+```json
+{
+  "success": true,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "data": {
+    "barrio": "San Fernando",
+    "sector": "primer sector",
+    "fuente": "general"
+  }
+}
+```
+
+### Sample response — not found
+
+```json
+{
+  "success": false,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "error": {
+    "code": "BARRIO_NOT_FOUND",
+    "message": "Barrio \"BarrioFalso\" no encontrado"
+  }
+}
+```

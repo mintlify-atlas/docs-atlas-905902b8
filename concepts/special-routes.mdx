@@ -1,0 +1,66 @@
+---
+title: "Special routes"
+description: "Fixed-fare routes that override the general sector pricing"
+---
+
+Special routes (*rutas especiales únicas*) are predefined origin/destination zones that carry a fixed fare regardless of the sector each neighborhood belongs to. When a trip matches a special route, the sector tables are never consulted.
+
+## How special routes work
+
+Special routes are defined in `rutas_especiales.json`. Each route has a list of `zonas` — neighborhood names that belong to that route. If the **origin or destination** of a trip matches any zone in a route's list, that route's fixed fare applies.
+
+This is Priority 1 in the fare engine — it overrides everything else. See [Fare calculation](/concepts/fare-calculation) for the full priority order.
+
+## Route fare table
+
+| Route ID | Route name | Day fare | Night fare |
+|----------|------------|----------|------------|
+| `ruta_1` | Ruta del Mundial / Cogollo / Campohermoso | $15,000 | $15,800 |
+| `ruta_2` | Ruta del Mundial / Tribuna Mirador / Seminario Mayor | $16,200 | $16,700 |
+| `ruta_3` | Ciudadela Industrial / Centro Abastos / Lecheboy | $19,100 | $19,700 |
+| `ruta_4` | Vereda La Trinidad / La Helida | $22,200 | $23,300 |
+| `servicio_horas` | Prestación de servicio por horas | $36,100 | $36,100 |
+
+The "servicio_horas" rate is the same for day and night.
+
+## Zones per route
+
+<AccordionGroup>
+  <Accordion title="ruta_1 — Ruta del Mundial / Cogollo / Campohermoso">
+    Zones: **Divino Niño**, **Cogollo**, **Campohermoso**, **Placa Huella**, **Confaboy Campestre**.
+
+    A trip is matched to this route if either the origin or destination exactly equals any of these zone names (after normalizing accents and casing).
+  </Accordion>
+  <Accordion title="ruta_2 — Ruta del Mundial / Tribuna Mirador / Seminario Mayor">
+    Zones: **Tribuna Mirador**, **Seminario Mayor**, **Juriscoop**, **Puente de la Balsa**, **Altos de Surba y Bonza**.
+  </Accordion>
+  <Accordion title="ruta_3 — Ciudadela Industrial / Centro Abastos / Lecheboy">
+    Zones: **Ciudadela Industrial**, **Centro Abastos**, **Portería**, **Lecheboy**, **Grupo Silva Plazas**, **Santa Clara**.
+  </Accordion>
+  <Accordion title="ruta_4 — Vereda La Trinidad / La Helida">
+    Zones: **Vereda La Trinidad**, **La Trinidad**, **La Helida**.
+  </Accordion>
+  <Accordion title="servicio_horas — Prestación de servicio por horas">
+    This route has no specific zones (`zonas: []`). It represents hourly service within the municipality of Duitama. The fixed rate of $36,100 applies regardless of time of day.
+  </Accordion>
+</AccordionGroup>
+
+To retrieve the full list of routes and their zones programmatically:
+
+```bash
+GET /api/v2026/rutas-especiales
+```
+
+## Exact zone matching
+
+<Warning>
+  Zone matching is **exact** after normalizing accents and casing. `"Cogollo Alto"` does **not** match the zone `"Cogollo"` — they are treated as different neighborhoods. If a neighborhood should belong to a special route, it must be explicitly listed in that route's `zonas` array in `rutas_especiales.json`.
+</Warning>
+
+The matching logic normalizes both the input and the zone name (lowercase, strip accents, trim whitespace) and then requires an **exact string equality** check — no substring or partial matching.
+
+## Holiday surcharge on special routes
+
+The special holiday surcharge of +$600 COP still applies on special routes when the trip date falls within a surcharge period (Jueves Santo, Viernes Santo, or December 16–31). See [Time and surcharges](/concepts/time-surcharges) for the full list of applicable dates.
+
+The surcharge is **not cumulative** — it can only be applied once per fare.

@@ -1,97 +1,61 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Duitama Taxi Pricing API"
+description: "Calculate taxi fares in Duitama, Boyacá, Colombia — based on Decreto 033 de 2026"
 ---
 
-## Setting up
+The Duitama Taxi Pricing API calculates official taxi fares for the city of Duitama, Boyacá, Colombia. Fares are computed according to **Decreto 033 del 16 de enero de 2026**, which defines pricing sectors, special routes, and time-based surcharges.
 
-Get your documentation site up and running in minutes.
+Send an origin and destination neighborhood name — the API returns the exact fare, the applicable sector, and whether day or night rates apply.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Make your first fare calculation in under 5 minutes
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Browse all endpoints with request and response details
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Core Concepts" icon="lightbulb" href="/concepts/fare-calculation">
+    Understand how fares are calculated and prioritized
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Deployment" icon="cloud" href="/deployment/local">
+    Run locally or deploy to AWS Lambda
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## How it works
 
-Everything you need to create world-class documentation.
+<Steps>
+  <Step title="Provide origin and destination">
+    Send the names of the origin and destination neighborhoods in Duitama. The API normalizes accents and casing automatically.
+  </Step>
+  <Step title="The API determines the fare rule">
+    The engine checks three priority rules in order: special fixed-rate routes, Terminal de Transporte table, and the general sector table.
+  </Step>
+  <Step title="Day/night rate is applied automatically">
+    The API reads the current time in Colombia (UTC-5). Fares after 7:00 p.m. and before 6:00 a.m. use the nighttime rate.
+  </Step>
+  <Step title="Receive the fare with full traceability">
+    The response includes the fare amount, the sector applied, the rate type, any surcharges, and which data source was used.
+  </Step>
+</Steps>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Key features
 
-## Need inspiration?
+<CardGroup cols={2}>
+  <Card title="5 pricing sectors" icon="map">
+    Neighborhoods are classified into primer, segundo, tercer, cuarto sector, and tarifa especial — each with its own day and night rate.
+  </Card>
+  <Card title="Special fixed routes" icon="route">
+    Four special routes (Cogollo, Tribuna, Ciudadela Industrial, La Trinidad) have fixed fares that override sector logic.
+  </Card>
+  <Card title="Terminal de Transporte fares" icon="bus">
+    Trips to or from the bus terminal use a separate pricing table, as specified by the decree.
+  </Card>
+  <Card title="Holiday surcharges" icon="calendar">
+    An automatic +$600 surcharge applies on Holy Thursday, Holy Friday, and December 16–31.
+  </Card>
+</CardGroup>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<Note>
+  This API is public and requires no authentication. All endpoints return JSON.
+</Note>

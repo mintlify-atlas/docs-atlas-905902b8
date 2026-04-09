@@ -1,0 +1,129 @@
+---
+title: 'Error codes'
+description: 'HTTP status codes and error codes returned by the API'
+---
+
+All errors follow the standard [response envelope](/api/overview#error). The `error` object contains a machine-readable `code`, a human-readable `message`, and an optional `details` object with additional context.
+
+## Error response structure
+
+```json
+{
+  "success": false,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "request_id": "a1b2c3d4-e5f6-4789-abcd-ef1234567890",
+  "error": {
+    "code": "SECTOR_NOT_FOUND",
+    "message": "No se encontró sector para \"Foo\" ni para \"Bar\"",
+    "details": {}
+  }
+}
+```
+
+## Error object fields
+
+<ResponseField name="code" type="string" required>
+  Machine-readable error identifier. Use this field in your application logic to handle specific error cases.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable description of what went wrong.
+</ResponseField>
+
+<ResponseField name="details" type="object">
+  Additional context about the error. For `VALIDATION_ERROR`, this contains field-level errors keyed by field name (e.g. `{ "origen": ["Required"] }`). May be absent or empty for other error codes.
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Code | When it occurs |
+|-------------|------|----------------|
+| `400` | `VALIDATION_ERROR` | The request body is missing required fields or contains values of the wrong type. Applies to `origen` and `destino` in `POST /calculate-fare`. |
+| `400` | `MISSING_PARAM` | A required query parameter was not provided. Returned by `GET /sector` when the `barrio` query parameter is absent. |
+| `404` | `BARRIO_NOT_FOUND` | The specified neighborhood was not found in any sector. Returned by `GET /sector`. |
+| `415` | `UNSUPPORTED_MEDIA_TYPE` | A `POST` request was sent without the `Content-Type: application/json` header. |
+| `422` | `SECTOR_NOT_FOUND` | Neither the origin nor the destination neighborhood could be matched to a sector. Returned by `POST /calculate-fare`. |
+| `500` | `INTERNAL_ERROR` | An unexpected server-side error occurred. |
+
+## Error details by code
+
+### `VALIDATION_ERROR` — 400
+
+Returned by `POST /api/v2026/calculate-fare` when the request body fails schema validation. The `details` object contains field-level errors:
+
+```json
+{
+  "success": false,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "request_id": "a1b2c3d4-e5f6-4789-abcd-ef1234567890",
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Datos de entrada inválidos",
+    "details": {
+      "origen": ["El origen es requerido"],
+      "destino": ["El destino es requerido"]
+    }
+  }
+}
+```
+
+### `MISSING_PARAM` — 400
+
+Returned by `GET /api/v2026/sector` when the `barrio` query parameter is missing:
+
+```json
+{
+  "success": false,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "request_id": "a1b2c3d4-e5f6-4789-abcd-ef1234567890",
+  "error": {
+    "code": "MISSING_PARAM",
+    "message": "Parámetro 'barrio' requerido"
+  }
+}
+```
+
+### `BARRIO_NOT_FOUND` — 404
+
+Returned by `GET /api/v2026/sector` when the neighborhood name does not match any entry. Neighborhood matching is exact (after normalizing accents and casing):
+
+```json
+{
+  "success": false,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "request_id": "a1b2c3d4-e5f6-4789-abcd-ef1234567890",
+  "error": {
+    "code": "BARRIO_NOT_FOUND",
+    "message": "Barrio \"Foo\" no encontrado"
+  }
+}
+```
+
+### `UNSUPPORTED_MEDIA_TYPE` — 415
+
+Returned by any `POST` endpoint when the `Content-Type: application/json` header is missing or set to a different value.
+
+### `SECTOR_NOT_FOUND` — 422
+
+Returned by `POST /api/v2026/calculate-fare` when neither `origen` nor `destino` can be mapped to a sector in the general or terminal fare tables, and neither belongs to a special route:
+
+```json
+{
+  "success": false,
+  "timestamp": "2026-03-10T14:30:00.000Z",
+  "request_id": "a1b2c3d4-e5f6-4789-abcd-ef1234567890",
+  "error": {
+    "code": "SECTOR_NOT_FOUND",
+    "message": "No se encontró sector para \"Foo\" ni para \"Bar\"",
+    "details": {}
+  }
+}
+```
+
+### `INTERNAL_ERROR` — 500
+
+Returned when an unexpected error occurs during request processing. The `message` field contains the error description when available.
+
+<Tip>
+  Every response includes a `request_id` field (UUID v4). Include it when reporting bugs or opening support issues — it uniquely identifies the failed request and makes server-side diagnosis significantly faster.
+</Tip>

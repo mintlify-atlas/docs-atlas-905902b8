@@ -1,0 +1,42 @@
+---
+title: "Security"
+description: "Security policy and how to report vulnerabilities"
+---
+
+## Supported versions
+
+| Version | Supported |
+|---------|-----------|
+| 1.x | Yes |
+
+## Security measures
+
+The API applies several layers of protection at the HTTP level.
+
+### Security headers
+
+The server uses [Helmet](https://helmetjs.github.io/) to set secure HTTP response headers. Content Security Policy (CSP) is configured to allow the Swagger UI assets to load from the CDN used by the `/docs` endpoint.
+
+### Input sanitization
+
+HTTP header values injected into the HTML rendered by the `/docs` endpoint are sanitized to prevent cross-site scripting (XSS). See `server.ts` for the reference implementation.
+
+### No authentication
+
+The API is intentionally public. No authentication or API key is required to call any endpoint. Rate limiting is not applied for the same reason.
+
+## Reporting a vulnerability
+
+<Warning>
+  Do not open a public GitHub issue to report a security vulnerability. Public disclosure before a fix is available can put users at risk.
+</Warning>
+
+<Note>
+  Report vulnerabilities privately using [GitHub Security Advisories](https://github.com/sebasgao05/duitama-taxi-pricing/security/advisories/new). Include the following in your report:
+
+  - A description of the problem
+  - Steps to reproduce it
+  - The potential impact
+
+  You will receive a response within **5 business days**. If the vulnerability is confirmed, a security advisory will be published and you will be credited in the fix.
+</Note>

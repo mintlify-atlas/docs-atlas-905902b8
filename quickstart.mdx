@@ -1,80 +1,115 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Make your first taxi fare calculation in under 5 minutes"
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
+- Node.js >= 18
+- npm >= 9
 
-### Step 1: Set up your local environment
+## Run locally
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
+  <Step title="Clone the repository and install dependencies">
+    ```bash
+    git clone https://github.com/sebasgao05/duitama-taxi-pricing.git
+    cd duitama-taxi-pricing
+    npm install
+    ```
+  </Step>
 
-### Step 2: Deploy your changes
+  <Step title="Configure environment variables">
+    Copy the example environment file to create your local `.env`:
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```bash
+    cp .env.example .env
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    The default values are ready to use for local development:
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    ```ini .env
+    PORT=3000
+    NODE_ENV=development
+    ```
+  </Step>
 
-### Step 3: Go live
+  <Step title="Start the development server">
+    ```bash
+    npm run dev
+    ```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    The server starts with hot-reload enabled. You should see output confirming the API and docs URLs are available.
+  </Step>
+
+  <Step title="Make your first fare calculation">
+    Send a `POST` request with the origin and destination neighborhood names:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST http://localhost:3000/api/v2026/calculate-fare \
+      -H "Content-Type: application/json" \
+      -d '{"origen":"San Fernando","destino":"Centro"}'
+    ```
+
+    ```javascript fetch
+    const response = await fetch('http://localhost:3000/api/v2026/calculate-fare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ origen: 'San Fernando', destino: 'Centro' }),
+    });
+    const data = await response.json();
+    console.log(data);
+    ```
+
+    </CodeGroup>
+
+    The API responds with the calculated fare and full traceability details:
+
+    ```json
+    {
+      "success": true,
+      "timestamp": "2026-03-10T14:30:00.000Z",
+      "request_id": "a1b2c3d4-e5f6-4789-abcd-ef1234567890",
+      "data": {
+        "origen": "San Fernando",
+        "destino": "Centro",
+        "hora_consulta": "09:30",
+        "fecha_consulta": "2026-03-10",
+        "fuente": "barrios.json → primer_sector",
+        "tarifa": 7000,
+        "tipo": "diurna",
+        "sector_aplicado": "primer sector",
+        "detalle": "Tarifa base primer sector diurna",
+        "recargos": []
+      }
+    }
+    ```
+
+    The `tarifa` field is the fare in Colombian pesos (COP). The `tipo` field is either `"diurna"` (day rate) or `"nocturna"` (night rate, applied from 7:00 p.m. to 5:59 a.m.). The `recargos` array lists any active surcharges, such as the $600 COP holiday surcharge applied on Jueves/Viernes Santo and December 16–31.
+  </Step>
+</Steps>
+
+<Tip>
+  Before testing fare calculations, confirm the server is running by calling `GET http://localhost:3000/health`. You can also explore all endpoints interactively through the Swagger UI at `http://localhost:3000/docs`.
+</Tip>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card
+    title="Core concepts"
+    icon="book-open"
+    href="/concepts/fare-calculation"
+  >
+    Learn how fare priority works — special routes, terminal table, general sector table, night rates, and holiday surcharges.
+  </Card>
+  <Card
+    title="API reference"
+    icon="code"
+    href="/api/calculate-fare"
+  >
+    Full request and response schemas for all endpoints, including error codes and validation rules.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

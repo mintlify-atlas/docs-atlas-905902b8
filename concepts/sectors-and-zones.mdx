@@ -1,0 +1,82 @@
+---
+title: "Sectors and zones"
+description: "How Duitama neighborhoods are classified into pricing sectors"
+---
+
+Every neighborhood in Duitama is assigned to one of five pricing sectors. The sector determines the base fare for a trip. All sector data comes from `barrios.json` (general table) and `barrios_terminal.json` (Terminal table).
+
+## The five sectors
+
+<CardGroup cols={2}>
+  <Card title="Primer sector" icon="circle" iconType="solid" color="#4CAF50">
+    The most central neighborhoods. Lowest base fare.
+  </Card>
+  <Card title="Segundo sector" icon="circle" iconType="solid" color="#2196F3">
+    Mid-range neighborhoods slightly further from the center.
+  </Card>
+  <Card title="Tarifa especial" icon="circle" iconType="solid" color="#FF9800">
+    A special-rate tier between segundo and tercer sector.
+  </Card>
+  <Card title="Tercer sector" icon="circle" iconType="solid" color="#9C27B0">
+    Outlying neighborhoods further from the city center.
+  </Card>
+  <Card title="Cuarto sector" icon="circle" iconType="solid" color="#F44336">
+    The most distant neighborhoods. Highest base fare.
+  </Card>
+</CardGroup>
+
+## Fare table (Decree 033, 2026)
+
+| Sector | Day fare | Night fare |
+|--------|----------|------------|
+| Primer sector | $7,000 | $7,500 |
+| Segundo sector | $7,900 | $8,600 |
+| Tarifa especial | $8,600 | $9,200 |
+| Tercer sector | $10,200 | $10,900 |
+| Cuarto sector | $12,600 | $13,100 |
+
+Night fares apply from 7:00 p.m. (19:00) to 5:59 a.m. See [Time and surcharges](/concepts/time-surcharges) for details.
+
+## Highest-sector rule
+
+When a trip uses the general table (Priority 3), the API compares the sector of the origin neighborhood against the sector of the destination neighborhood, and applies the fare for whichever sector is **higher**.
+
+The priority order from lowest to highest is defined by `ORDEN_SECTORES` in `tarifas.json`:
+
+```json
+[
+  "primer_sector",
+  "segundo_sector",
+  "tarifa_especial",
+  "tercer_sector",
+  "cuarto_sector"
+]
+```
+
+<Note>
+  The highest sector between origin and destination always wins. A trip from `primer_sector` to `tercer_sector` is charged at the `tercer_sector` rate.
+</Note>
+
+## Terminal de Transporte table
+
+Some neighborhoods have a **different sector** when the trip involves the Terminal de Transporte or Carrera 42. These neighborhoods are listed separately in `barrios_terminal.json`.
+
+When either the origin or destination is recognized as the Terminal, the API looks up the other neighborhood in `barrios_terminal.json` instead of the general table.
+
+**Example:** `Sauna La Frontera` is classified as `tercer_sector` in the general table, but as `cuarto_sector` in the Terminal table. A trip between `Sauna La Frontera` and the Terminal is therefore charged at the `cuarto_sector` rate ($12,600 day / $13,100 night), not the `tercer_sector` rate.
+
+<Note>
+  If a neighborhood is not explicitly listed in `barrios_terminal.json`, the API falls back to the general table and logs a warning. This may produce an incorrect fare — contact the data maintainer to add the neighborhood.
+</Note>
+
+## Map colors
+
+The `GET /api/v2026/zones` endpoint returns each sector with a color code for map rendering:
+
+| Sector | Color |
+|--------|-------|
+| Primer sector | `#4CAF50` |
+| Segundo sector | `#2196F3` |
+| Tarifa especial | `#FF9800` |
+| Tercer sector | `#9C27B0` |
+| Cuarto sector | `#F44336` |

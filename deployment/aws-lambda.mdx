@@ -1,0 +1,118 @@
+---
+title: 'AWS Lambda deployment'
+description: 'Deploy the API to AWS Lambda using AWS SAM'
+---
+
+## Architecture
+
+AWS SAM compiles the template and deploys via CloudFormation, producing an API Gateway REST API backed by a single Lambda function running the Express app.
+
+```
+AWS SAM → CloudFormation → API Gateway REST → Lambda (Node.js 20, 256 MB, 10s timeout)
+                                                   └── Express App (src/server.ts)
+```
+
+**Lambda handler:** `dist/lambda.handler`
+
+API Gateway caching is enabled only in the production environment, with a 600-second TTL on GET endpoints.
+
+<Note>
+  The API Gateway stage prefix (`/qa`, `/staging`, `/production`) is stripped from the path before the request reaches Express. The Lambda handler (`src/lambda.ts`) removes the stage segment from `event.path` so routes work identically across all environments.
+</Note>
+
+## Prerequisites
+
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) configured with valid credentials
+- [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html) installed
+- Node.js >= 18 and npm >= 9
+
+## Deploy
+
+<Steps>
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+
+  <Step title="Build for Lambda">
+    This compiles TypeScript and copies `src/swagger.yaml` to `dist/` so the Lambda bundle includes the OpenAPI spec:
+
+    ```bash
+    npm run build:lambda
+    ```
+  </Step>
+
+  <Step title="Build the SAM application">
+    ```bash
+    sam build
+    ```
+  </Step>
+
+  <Step title="Deploy to an environment">
+    Use `--config-env` to target a specific environment defined in `samconfig.toml`:
+
+    <CodeGroup>
+
+    ```bash qa
+    sam deploy --config-env qa
+    ```
+
+    ```bash staging
+    sam deploy --config-env staging
+    ```
+
+    ```bash production
+    sam deploy --config-env production
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Retrieve the API URL">
+    After a successful deploy, SAM prints the stack outputs. The `ApiUrl` output contains the base URL for the deployed API:
+
+    ```
+    https://{id}.execute-api.{region}.amazonaws.com/{stage}
+    ```
+
+    Append `/api/v2026` to reach the API endpoints, or `/docs` for the Swagger UI.
+  </Step>
+</Steps>
+
+## Environments
+
+The three environments are defined in `samconfig.toml` with the following parameters:
+
+| Environment | Stack name | Cache | `CACHE_TTL` |
+|---|---|---|---|
+| QA | `duitama-taxi-pricing-qa` | Disabled | `0` |
+| Staging | `duitama-taxi-pricing-staging` | Disabled | `0` |
+| Production | `duitama-taxi-pricing-production` | Enabled (600 s on GET) | `600` |
+
+All environments deploy to `us-east-1`.
+
+## Cached endpoints (production only)
+
+API Gateway caches responses for the following GET endpoints with a 600-second TTL:
+
+| Endpoint | Method |
+|---|---|
+| `/api/v2026/zones` | GET |
+| `/api/v2026/barrios` | GET |
+| `/api/v2026/rutas-especiales` | GET |
+| `/api/v2026/sector` | GET |
+
+All other methods and paths have caching disabled (`/*` — `CachingEnabled: false`).
+
+## Lambda configuration
+
+These values are set globally in `template.yaml` under `Globals.Function`:
+
+| Setting | Value |
+|---|---|
+| Runtime | `nodejs20.x` |
+| Memory | 256 MB |
+| Timeout | 10 seconds |
+| `NODE_ENV` | Resolved from `NodeEnv` parameter (`qa`, `staging`, or `production`) |
+| `CACHE_TTL` | Resolved from `CacheTtl` parameter |

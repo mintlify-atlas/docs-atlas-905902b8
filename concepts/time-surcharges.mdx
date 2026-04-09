@@ -1,0 +1,80 @@
+---
+title: "Time and surcharges"
+description: "Day/night rates and special holiday surcharges"
+---
+
+Fares vary by time of day and by calendar date. The API reads the current time automatically — callers do not need to pass a time or date in their requests.
+
+## Colombia time
+
+<Info>
+  All time calculations use **Colombia Standard Time (COT), UTC−5**, implemented as `America/Bogota`. The API never uses the server's local clock timezone — it always converts to Colombia time via `Intl.DateTimeFormat` before evaluating any time-based rules.
+</Info>
+
+Every response includes two fields for transparency:
+
+| Field | Format | Description |
+|-------|--------|-------------|
+| `hora_consulta` | `HH:MM` | Time of the request in Colombia time |
+| `fecha_consulta` | `YYYY-MM-DD` | Date of the request in Colombia time |
+
+## Nighttime hours
+
+The night fare applies from **7:00 p.m. (19:00) to 5:59 a.m.** The daytime rate applies from 6:00 a.m. to 6:59 p.m.
+
+These boundaries come from `tarifas.json`:
+
+```json
+"horario_nocturno": { "inicio": "19:00", "fin": "05:59" }
+```
+
+The `isNocturno` function converts both the current time and the boundary times to total minutes, then checks:
+
+```typescript
+return minutos >= toMin(inicio) || minutos <= toMin(fin);
+```
+
+Because the nighttime window spans midnight, the condition uses `||` (OR): a time is nocturnal if it is at or after 19:00 **or** at or before 05:59.
+
+## Special holiday surcharge
+
+A surcharge of **+$600 COP** (`RECARGO_ESPECIAL`) is added to the base fare on the following dates:
+
+| Period | Dates |
+|--------|-------|
+| Jueves Santo (Holy Thursday) | Calculated dynamically each year |
+| Viernes Santo (Holy Friday) | Calculated dynamically each year |
+| December end-of-year period | December 16 through December 31 |
+
+<Note>
+  The surcharge is **not cumulative**. It is applied at most once per fare calculation, regardless of how many surcharge conditions might theoretically overlap. The `recargos` array in the response will contain at most one entry: `"Recargo especial: +$600"`.
+</Note>
+
+### Holy Week date calculation
+
+Jueves Santo and Viernes Santo are calculated dynamically for each year using **Butcher's algorithm** — an integer arithmetic method for computing the date of Easter Sunday. Holy Thursday is Easter minus 3 days; Holy Friday is Easter minus 2 days. The dates are never hardcoded, so the surcharge window shifts correctly every year without any configuration changes.
+
+### Surcharge in responses
+
+When the surcharge applies, it appears in the `recargos` array:
+
+```json
+{
+  "tarifa": 7600,
+  "tipo": "diurna",
+  "sector_aplicado": "primer sector",
+  "recargos": ["Recargo especial: +$600"],
+  "hora_consulta": "10:15",
+  "fecha_consulta": "2026-12-24"
+}
+```
+
+When no surcharge applies, `recargos` is an empty array:
+
+```json
+{
+  "recargos": []
+}
+```
+
+The surcharge applies to all three fare sources: the general sector table, the Terminal table, and special routes.

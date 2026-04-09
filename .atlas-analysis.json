@@ -1,23 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Duitama Taxi Pricing API",
+  "projectType": "api-service",
+  "projectName": "Duitama Taxi Pricing API",
+  "projectDescription": "A REST API for calculating taxi fares in Duitama, Boyacá, Colombia, based on Decreto 033 de 2026.",
   "theme": "luma",
-  "colors": {
-    "primary": "#2196F3",
-    "light": "#E3F2FD",
-    "dark": "#0D47A1"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/sebasgao05/duitama-taxi-pricing"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/sebasgao05/duitama-taxi-pricing"
-    }
-  },
+  "primaryColor": "#2196F3",
+  "lightColor": "#E3F2FD",
+  "darkColor": "#0D47A1",
   "navigation": {
     "tabs": [
       {
@@ -80,5 +68,26 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Calculates taxi fares based on origin and destination neighborhoods",
+    "Supports 5 pricing sectors plus special fixed-rate routes",
+    "Automatic day/night rate determination using Colombia time (UTC-5)",
+    "Special holiday surcharges for Holy Week (Thursday/Friday) and December 16-31",
+    "Separate fare tables for Terminal de Transporte routes",
+    "Exact neighborhood name matching with accent normalization",
+    "AWS Lambda deployment via SAM with API Gateway caching",
+    "Multi-environment CI/CD pipeline (QA, Staging, Production)",
+    "Swagger UI documentation at /docs",
+    "Full test coverage with Jest"
+  ],
+  "publicApiSurface": [
+    "POST /api/v2026/calculate-fare",
+    "GET /api/v2026/zones",
+    "GET /api/v2026/sector?barrio=<name>",
+    "GET /api/v2026/barrios",
+    "GET /api/v2026/rutas-especiales",
+    "GET /health",
+    "GET /docs"
+  ]
 }
